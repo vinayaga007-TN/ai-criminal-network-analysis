@@ -16,95 +16,51 @@ function getGeminiClient(): GoogleGenAI | null {
   if (!geminiClient && process.env.GEMINI_API_KEY) {
     geminiClient = new GoogleGenAI({
       apiKey: process.env.GEMINI_API_KEY,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        },
-      },
+      httpOptions: { headers: { 'User-Agent': 'aistudio-build' } },
     });
   }
   return geminiClient;
 }
 
-// System instruction enforcing non-guilt terminology and ChatGPT response format
 const SYSTEM_INSTRUCTION = `You are ANALYSER AI, an AI-powered criminal-network investigation assistant for authorized law enforcement investigators.
-Primary design inspiration: Clean conversational copilot.
-
 CRITICAL ETHICAL RULES:
 1. The AI MUST NOT declare guilt.
-2. ALWAYS use precise investigative hedging language:
-   - "Potential connection"
-   - "Investigation lead"
-   - "Unusual pattern"
-   - "Investigation priority"
-   - "Requires verification"
-3. Avoid definitive accusations or emotional bias.
+2. Always use investigative language such as Potential connection, Investigation lead, Unusual pattern, Investigation priority, and Requires verification.
+3. Do not invent evidence, witnesses, records, or facts.
+4. Distinguish facts from inferences and state uncertainty.
 
-CASE CONTEXT (Case NX-2047: Urban Chain-Snatching & Gold Fencing Syndicate):
-- Deepak Mehta: Suspected receiver and intermediary anchor between street snatchers and commercial fronts. Linked to Prakash Traders and Om Enterprises.
-- Suresh Yadav: Field handler dispatching two-wheeler riders (Golden Star Gang). 42 calls with Deepak Mehta.
-- Kavita Nair: Compliance officer and authorized digital token holder for Om Enterprises. Shared IP logins with Deepak Mehta.
-- Prakash Traders: Shell wholesale entity with ₹18.4L turnover in Bank of Baroda #4902 and zero tax filings.
-- Om Enterprises: Layering vehicle transferring ₹18.4L in 6 tranches. Flagged by Isolation Forest.
-- Gaurav G: Melts unrefined gold into crude bars (420g crude bar seized).
-- Evidence: FIR No. 204/2026, Seizure Memo MK-883, Bank of Baroda ledger #4902, BSNL CDR Dump.
+CASE CONTEXT (synthetic demo Case NX-2047):
+- Deepak Mehta: investigation subject and possible intermediary linking commercial entities and field contacts.
+- Suresh Yadav: field contact with recorded communications in the synthetic dataset.
+- Kavita Nair: authorized digital token holder for Om Enterprises in the synthetic dataset.
+- Prakash Traders and Om Enterprises: commercial entities appearing in the synthetic financial dataset.
+- Evidence includes a synthetic FIR, seizure memo, bank ledger, and CDR dataset.
 
-RESPONSE FORMAT (ChatGPT style):
-Provide a direct, conversational answer with Markdown formatting:
-[1-2 clear summary sentences]
+Answer directly in Markdown. Use sections such as Key connections, Investigation lead, Evidence, Confidence, and Missing evidence when useful. Never present the synthetic case as a real investigation.`;
 
-### Key connections
-• **Entity Name**
-  Relationship type
-  Brief detail
-
-### Investigation lead
-[Specific lead or unusual pattern, noting "Requires verification"]
-
-### Evidence
-[Evidence document names]
-Confidence: [Percentage between 80% and 95%]`;
-
-// API routes
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', app: 'Analyser AI', case: 'NX-2047' });
 });
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { query } = req.body;
-    if (!query) {
-      return res.status(400).json({ error: 'Query is required' });
-    }
+    const query = typeof req.body?.query === 'string' ? req.body.query.trim() : '';
+    if (!query) return res.status(400).json({ error: 'Query is required' });
+    if (query.length > 8000) return res.status(413).json({ error: 'Query is too large' });
 
     const ai = getGeminiClient();
-    if (ai) {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: query,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          temperature: 0.2,
-        },
-      });
+    if (!ai) return res.status(200).json({ useLocalFallback: true });
 
-      const text = response.text || '';
-      return res.json({
-        text,
-        confidence: 88,
-      });
-    }
-
-    // If no API key configured, signal client to use local case intelligence
-    return res.status(200).json({
-      useLocalFallback: true,
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents: query,
+      config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.2 },
     });
+
+    return res.json({ text: response.text || '', confidence: 88 });
   } catch (error: any) {
-    console.error('Gemini chat error:', error);
-    return res.status(200).json({
-      useLocalFallback: true,
-      error: error.message,
-    });
+    console.error('Gemini chat error:', error?.message || error);
+    return res.status(200).json({ useLocalFallback: true });
   }
 });
 
@@ -118,9 +74,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    app.get('*', (_req, res) => res.sendFile(path.join(distPath, 'index.html')));
   }
 
   app.listen(PORT, '0.0.0.0', () => {
