@@ -6,6 +6,7 @@ export type ToolType =
   | 'anomalies'
   | 'key-entities'
   | 'reports'
+  | 'exposure-intelligence'
   | 'audit-trail'
   | 'provenance';
 
@@ -17,7 +18,7 @@ export interface Entity {
   type: EntityType;
   alias?: string;
   role: string;
-  investigationPriority: number; // 0 - 100
+  investigationPriority: number;
   priorityLevel: 'High' | 'Medium' | 'Low';
   degree: number;
   betweenness: number;
@@ -28,12 +29,7 @@ export interface Entity {
   potentialLeads: string[];
   requiresVerification: boolean;
   avatarUrl?: string;
-  details: {
-    aadhaarOrReg?: string;
-    financialVolume?: string;
-    lastSeenLocation?: string;
-    notes?: string;
-  };
+  details: { aadhaarOrReg?: string; financialVolume?: string; lastSeenLocation?: string; notes?: string; };
 }
 
 export interface NetworkEdge {
@@ -61,12 +57,7 @@ export interface EvidenceItem {
   processing: string;
   provenance: string;
   rawSnippet: string;
-  extractedEntities: {
-    name: string;
-    type: EntityType;
-    confidence: number;
-    role: string;
-  }[];
+  extractedEntities: { name: string; type: EntityType; confidence: number; role: string; }[];
 }
 
 export interface AnomalyItem {
@@ -104,44 +95,27 @@ export interface ReportItem {
   content: string;
 }
 
-export interface ChatSession {
-  id: string;
-  title: string;
-  timestamp: string;
-  messagesCount: number;
-}
-
-export interface AuditRecord {
-  id: string;
-  timestamp: string;
-  action: string;
-  actor: string;
-  hash: string;
-  details: string;
-  blockNumber?: string;
-  blockHash?: string;
-  user?: string;
-}
-
+export interface ChatSession { id: string; title: string; timestamp: string; messagesCount: number; }
+export interface AuditRecord { id: string; timestamp: string; action: string; actor: string; hash: string; details: string; blockNumber?: string; blockHash?: string; user?: string; }
 export type AuditLogItem = AuditRecord;
-
 export interface ChatMessage {
-  id: string;
-  sender: 'user' | 'ai';
-  timestamp: string;
-  text: string;
-  keyConnections?: {
-    entity: string;
-    type: string;
-    detail: string;
-  }[];
+  id: string; sender: 'user' | 'ai'; timestamp: string; text: string;
+  keyConnections?: { entity: string; type: string; detail: string; }[];
   investigationLeads?: string[];
-  evidenceSources?: {
-    id: string;
-    title: string;
-    hash?: string;
-  }[];
-  confidence?: number;
-  targetEntityId?: string;
-  evidenceId?: string;
+  evidenceSources?: { id: string; title: string; hash?: string; }[];
+  confidence?: number; targetEntityId?: string; evidenceId?: string;
+}
+
+export type ExposureIdentifierType = 'email' | 'username' | 'phone' | 'domain';
+export interface ExposureRecord {
+  id: string;
+  identifierType: ExposureIdentifierType;
+  identifier: string;
+  source: string;
+  firstSeen: string;
+  lastSeen: string;
+  dataTypes: string[];
+  confidence: number;
+  caseEntityId?: string;
+  notes: string;
 }
