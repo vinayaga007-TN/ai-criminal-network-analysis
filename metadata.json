@@ -1,0 +1,6 @@
+{
+  "name": "Analyser AI",
+  "description": "Production-quality AI-powered criminal network investigation assistant and link analysis workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
