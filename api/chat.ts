@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
 
 const SYSTEM_INSTRUCTION = `You are ANALYSER AI, an AI-powered criminal-network investigation assistant for authorized investigators.
@@ -12,10 +11,8 @@ CRITICAL ETHICAL RULES:
 
 Answer directly in Markdown with concise sections such as Key connections, Investigation lead, Evidence, Confidence, and Missing evidence when useful.`;
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const query = typeof req.body?.query === 'string' ? req.body.query.trim() : '';
